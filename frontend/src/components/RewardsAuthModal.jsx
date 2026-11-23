@@ -50,22 +50,24 @@ function RewardsAuthModal() {
       aria-label="Rewards registration"
     >
       <div className="ot-modal rw-modal">
-        <header className="ot-head">
-          <p className="ot-eyebrow">AMOONS Rewards</p>
-          <h2>Register your mobile to earn rewards</h2>
-          <p className="ot-lead">
-            Enter your name and mobile number. Existing members keep their
-            points balance.
+        <header className="rw-head">
+          <p className="ot-brand-mark font-serif">AMOONS</p>
+          <p className="rw-eyebrow">Rewards</p>
+          <h2 className="rw-title">Join AMOONS Rewards</h2>
+          <p className="rw-lead">
+            Enter your name and mobile number to earn points on every completed
+            order. Existing members keep their balance.
           </p>
         </header>
 
-        <form className="ot-form" onSubmit={onSubmit}>
+        <form className="ot-form rw-form" onSubmit={onSubmit}>
           <label className="ot-field">
             <span>Full Name</span>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
               autoComplete="name"
+              placeholder="Your name"
               required
             />
           </label>
@@ -85,7 +87,7 @@ function RewardsAuthModal() {
               {error}
             </p>
           ) : null}
-          <div className="rw-actions rw-actions--single">
+          <div className="rw-actions">
             <button
               type="button"
               className="hero-btn hero-btn-secondary"
@@ -99,7 +101,7 @@ function RewardsAuthModal() {
               className="hero-btn hero-btn-primary"
               disabled={loading}
             >
-              {loading ? 'Registering…' : 'Register'}
+              {loading ? 'Registering…' : 'Continue'}
             </button>
           </div>
         </form>

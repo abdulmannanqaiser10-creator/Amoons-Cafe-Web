@@ -9,6 +9,7 @@ import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
 import OrderTypeModal from './components/OrderTypeModal';
 import RewardsAuthModal from './components/RewardsAuthModal';
+import ScrollToTop from './components/ScrollToTop';
 import { useOrderType } from './context/OrderTypeContext';
 
 function PickupRoute() {
@@ -26,6 +27,7 @@ function PickupRoute() {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/menu" element={<Home />} />

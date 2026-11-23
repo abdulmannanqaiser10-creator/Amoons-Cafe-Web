@@ -9,7 +9,7 @@ import {
 
 function VisitSection() {
   return (
-    <section id="home-visit" className="home-invite page-pad-x">
+    <section id="home-visit" className="home-invite page-pad-x scroll-mt-24">
       <div className="home-invite-inner">
         <div className="home-invite-intro">
           <h2 className="home-invite-title">Good coffee. Great company.</h2>
@@ -55,7 +55,7 @@ function VisitSection() {
               Pickup and dine-in available every day.
             </p>
             <div className="home-invite-card-actions">
-              <Link to="/reservations" className="home-invite-btn">
+              <Link to="/reservations" className="home-invite-btn" id="reservations">
                 Reserve a table
               </Link>
               <Link to="/visit" className="home-invite-btn home-invite-btn--ghost">

@@ -6,9 +6,9 @@ function PageShell({ children }) {
   const { itemCount } = useCart();
 
   return (
-    <div className="amoons-page min-h-screen bg-white">
+    <div className="amoons-page page-shell min-h-screen bg-white">
       <Header bagCount={itemCount} />
-      <main>{children}</main>
+      <main className="page-shell-main">{children}</main>
       <Footer />
     </div>
   );

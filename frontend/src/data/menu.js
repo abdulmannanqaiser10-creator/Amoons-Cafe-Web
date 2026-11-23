@@ -1,16 +1,23 @@
 export const CATEGORIES = [
-  { id: 'all', label: 'All' },
+  { id: 'featured', label: 'Featured' },
   { id: 'breakfast', label: 'Breakfast' },
   { id: 'appetizers-fries', label: 'Appetizers & Fries' },
   { id: 'sandwiches-croissants', label: 'Sandwiches & Croissants' },
   { id: 'pasta', label: 'Pasta' },
   { id: 'desserts', label: 'Desserts' },
+  { id: 'coffee', label: 'Coffee' },
   { id: 'iced-tea', label: 'Iced Tea' },
   { id: 'matcha', label: 'Matcha' },
   { id: 'classic-mocktails', label: 'Classic Mocktails' },
   { id: 'signature-mocktails', label: 'Signature Mocktails' },
   { id: 'frappes', label: 'Frappes' },
   { id: 'bottled-drinks', label: 'Bottled Drinks' },
+];
+
+export const FEATURED_PRODUCT_IDS = [
+  'flat-white',
+  'smashed-beef-croissant',
+  'tiramisu-160g',
 ];
 
 const MILK_LABELS = [
@@ -30,6 +37,19 @@ function milkVariants(slug, prices) {
 }
 
 export const PRODUCTS = [
+  // Coffee
+  {
+    id: 'flat-white',
+    name: 'Flat White',
+    category: 'coffee',
+    price: 750,
+    description:
+      'Velvety microfoam over a double shot of espresso — smooth, balanced and made to linger.',
+    image:
+      'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=900&q=80',
+    featured: true,
+  },
+
   // Breakfast
   {
     id: 'steak-cheese-omelet',
@@ -253,6 +273,7 @@ export const PRODUCTS = [
     price: 1599,
     description: 'A little messy, very extra, and worth every crumb.',
     image: 'https://amoonscafe.com/wp-content/uploads/2026/10/amoons-product-301.png',
+    featured: true,
   },
 
   // Pasta
@@ -286,12 +307,13 @@ export const PRODUCTS = [
   // Desserts
   {
     id: 'tiramisu-160g',
-    name: 'Tiramisu (160g slice)',
+    name: 'Tiramisu',
     category: 'desserts',
     price: 1150,
     description:
       'A single-serving slice of our signature tiramisu — espresso-soaked ladyfingers, velvety mascarpone cream, finished with a dusting of cocoa. 160g · single serving',
     image: 'https://amoonscafe.com/wp-content/uploads/2026/10/amoons-product-12.png',
+    featured: true,
     variantLabel: 'Layers',
     variants: [
       { id: 'tiramisu-2-layers', label: '2 Layers', price: 1150 },
@@ -555,6 +577,15 @@ export function formatPrice(pkr) {
 
 export function productMatchesCategory(product, categoryId) {
   if (categoryId === 'all') return true;
+  if (categoryId === 'featured') {
+    return Boolean(product.featured) || FEATURED_PRODUCT_IDS.includes(product.id);
+  }
   if (product.category === categoryId) return true;
   return Array.isArray(product.categories) && product.categories.includes(categoryId);
+}
+
+export function getFeaturedProducts() {
+  return FEATURED_PRODUCT_IDS.map((id) => PRODUCTS.find((item) => item.id === id)).filter(
+    Boolean
+  );
 }

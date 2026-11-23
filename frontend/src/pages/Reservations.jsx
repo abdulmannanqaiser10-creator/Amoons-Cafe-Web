@@ -10,7 +10,7 @@ import {
 function Reservations() {
   return (
     <PageShell>
-      <section className="info-page">
+      <section className="info-page info-page--centered" id="reservations-page">
         <div className="info-panel info-panel--reservations">
           <p className="info-label">MAKE TIME FOR AMOONS</p>
           <h1 className="info-heading">We’d love to welcome you.</h1>

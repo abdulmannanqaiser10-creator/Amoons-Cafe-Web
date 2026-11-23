@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useOrderType } from '../context/OrderTypeContext';
-import { FULFILLMENT } from '../config/delivery';
+import { FULFILLMENT, nearestArea } from '../config/delivery';
 
 function OrderTypeModal() {
   const {
@@ -11,9 +11,6 @@ function OrderTypeModal() {
     setCityId,
     areaId,
     setAreaId,
-    streetAddress,
-    setStreetAddress,
-    pickupLocation,
     confirmDelivery,
     confirmPickup,
   } = useOrderType();
@@ -22,11 +19,15 @@ function OrderTypeModal() {
     fulfillment === FULFILLMENT.PICKUP ? 'pickup' : 'delivery'
   );
   const [error, setError] = useState('');
+  const [geoStatus, setGeoStatus] = useState('');
+  const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setMode(fulfillment === FULFILLMENT.PICKUP ? 'pickup' : 'delivery');
     setError('');
+    setGeoStatus('');
+    setGeoLoading(false);
   }, [open, fulfillment]);
 
   const city = useMemo(
@@ -36,6 +37,56 @@ function OrderTypeModal() {
   const areas = city?.areas || [];
 
   if (!open) return null;
+
+  const selectArea = (nextAreaId) => {
+    setCityId(city?.id || cities[0]?.id || 'karachi');
+    setAreaId(nextAreaId);
+    setError('');
+    setGeoStatus('');
+  };
+
+  const useCurrentLocation = () => {
+    setError('');
+    setGeoStatus('');
+
+    if (!navigator.geolocation) {
+      setGeoStatus('Location is not supported by this browser.');
+      return;
+    }
+
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setGeoLoading(false);
+        const match = nearestArea(
+          position.coords.latitude,
+          position.coords.longitude
+        );
+        if (!match) {
+          setGeoStatus('Could not match your location. Please select manually.');
+          return;
+        }
+        setCityId(match.city.id);
+        setAreaId(match.area.id);
+        setGeoStatus(`Selected ${match.area.label} based on your location.`);
+      },
+      (problem) => {
+        setGeoLoading(false);
+        if (problem?.code === 1) {
+          setGeoStatus(
+            'Location permission denied. Please allow access or select a location below.'
+          );
+          return;
+        }
+        if (problem?.code === 3) {
+          setGeoStatus('Location request timed out. Please select a location below.');
+          return;
+        }
+        setGeoStatus('Unable to detect your location. Please select a location below.');
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+  };
 
   const onConfirm = () => {
     setError('');
@@ -47,7 +98,7 @@ function OrderTypeModal() {
       confirmDelivery({
         city: cityId || city?.id,
         area: areaId,
-        address: streetAddress,
+        address: '',
       });
     } catch (problem) {
       setError(problem.message || 'Please complete your selection.');
@@ -56,89 +107,71 @@ function OrderTypeModal() {
 
   return (
     <div className="ot-overlay" role="dialog" aria-modal="true" aria-label="Order type">
-      <div className="ot-modal">
-        <header className="ot-head">
-          <p className="ot-eyebrow">Welcome to AMOONS</p>
-          <h2>How would you like your order?</h2>
-          <p className="ot-lead">
-            Choose delivery or pick-up before browsing the menu.
-          </p>
+      <div className="ot-modal ot-modal--premium">
+        <header className="ot-brand">
+          <p className="ot-brand-mark font-serif">AMOONS</p>
+          <p className="ot-brand-sub">EST. 2024</p>
+          <h2 className="ot-title">Select your order type</h2>
         </header>
 
-        <div className="ot-choices">
+        <div className="ot-choices ot-choices--buttons" role="group" aria-label="Order type">
           <button
             type="button"
-            className={`ot-choice${mode === 'delivery' ? ' is-active' : ''}`}
+            className={`ot-type-btn${mode === 'delivery' ? ' is-active' : ''}`}
             onClick={() => setMode('delivery')}
           >
-            <span className="ot-choice-label">Delivery</span>
-            <span className="ot-choice-copy">
-              We bring AMOONS to your door in selected areas.
-            </span>
+            Delivery
           </button>
           <button
             type="button"
-            className={`ot-choice${mode === 'pickup' ? ' is-active' : ''}`}
+            className={`ot-type-btn${mode === 'pickup' ? ' is-active' : ''}`}
             onClick={() => setMode('pickup')}
           >
-            <span className="ot-choice-label">Pick-Up</span>
-            <span className="ot-choice-copy">
-              Collect from DHA Phase 8, Karachi, Pakistan.
-            </span>
+            Pick-up
           </button>
         </div>
 
-        {mode === 'delivery' ? (
-          <div className="ot-form">
-            <label className="ot-field">
-              <span>City</span>
-              <select
-                value={cityId || city?.id || ''}
-                onChange={(event) => {
-                  setCityId(event.target.value);
-                  setAreaId('');
-                }}
-              >
-                {cities.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+        <div className="ot-location">
+          <h3 className="ot-location-title">Select Your Location</h3>
 
-            <label className="ot-field">
-              <span>Area</span>
-              <select
-                value={areaId}
-                onChange={(event) => setAreaId(event.target.value)}
-              >
-                <option value="">Select area</option>
-                {areas.map((area) => (
-                  <option key={area.id} value={area.id}>
-                    {area.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <button
+            type="button"
+            className="ot-geo-btn"
+            onClick={useCurrentLocation}
+            disabled={geoLoading}
+          >
+            {geoLoading ? 'Detecting location…' : 'Use Current Location'}
+          </button>
 
-            <label className="ot-field">
-              <span>Street address</span>
-              <textarea
-                rows={2}
-                value={streetAddress}
-                onChange={(event) => setStreetAddress(event.target.value)}
-                placeholder="House / flat, street, landmark"
-              />
-            </label>
+          {geoStatus ? (
+            <p
+              className={`ot-geo-status${
+                geoStatus.startsWith('Selected') ? ' is-success' : ' is-warn'
+              }`}
+              role="status"
+            >
+              {geoStatus}
+            </p>
+          ) : null}
+
+          <div className="ot-area-grid" role="listbox" aria-label="Delivery locations">
+            {areas.map((area) => {
+              const selected = areaId === area.id;
+              return (
+                <button
+                  key={area.id}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`ot-area-btn${selected ? ' is-active' : ''}`}
+                  onClick={() => selectArea(area.id)}
+                >
+                  {area.label}
+                </button>
+              );
+            })}
           </div>
-        ) : (
-          <div className="ot-pickup-card">
-            <p className="ot-pickup-title">{pickupLocation.title}</p>
-            <p>{pickupLocation.line}</p>
-            <p className="ot-pickup-detail">{pickupLocation.detail}</p>
-          </div>
-        )}
+        </div>
 
         {error ? (
           <p className="ot-error" role="alert">

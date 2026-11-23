@@ -71,14 +71,11 @@ export function OrderTypeProvider({ children }) {
   const confirmDelivery = useCallback(
     ({ city, area, address }) => {
       const match = findArea(city, area);
-      if (!match) throw new Error('Select a valid delivery area.');
-      if (!String(address || '').trim() || String(address).trim().length < 8) {
-        throw new Error('Enter a complete street address.');
-      }
+      if (!match) throw new Error('Select your location to continue.');
       setFulfillment(FULFILLMENT.DELIVERY);
       setCityId(city);
       setAreaId(area);
-      setStreetAddress(String(address).trim());
+      setStreetAddress(String(address || '').trim());
       setOpen(false);
     },
     []

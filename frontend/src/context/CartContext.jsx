@@ -80,11 +80,8 @@ export function CartProvider({ children }) {
           },
         ];
       });
-      if (!token) {
-        window.setTimeout(() => openAuth('rewards'), 350);
-      }
     },
-    [token, openAuth]
+    []
   );
 
   const removeItem = useCallback((id) => {

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { formatPrice } from '../data/menu';
 
-function ProductCard({ product, onAdd }) {
+function ProductCard({ product, onAdd, featured = false }) {
   const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
   const [variantId, setVariantId] = useState(
     hasVariants ? product.variants[0].id : null
@@ -25,18 +25,23 @@ function ProductCard({ product, onAdd }) {
   }, [product, selectedVariant]);
 
   return (
-    <article className="product-card">
-      <div className="product-card-media">
+    <article className={`product-card${featured ? ' product-card--featured' : ''}`}>
+      <button
+        type="button"
+        className="product-card-media product-card-media--clickable"
+        onClick={() => onAdd(cartProduct)}
+        aria-label={`Add ${product.name} to cart`}
+      >
         {product.tag && <span className="product-card-tag">{product.tag}</span>}
         <img src={product.image} alt={product.name} loading="lazy" />
-      </div>
+      </button>
 
       <div className="product-card-body">
         <div className="product-card-top">
           <h3 className="product-card-title">{product.name}</h3>
           <p className="product-card-price">{formatPrice(displayPrice)}</p>
         </div>
-        {product.description ? (
+        {!featured && product.description ? (
           <p className="product-card-desc">{product.description}</p>
         ) : null}
 

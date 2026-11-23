@@ -11,8 +11,8 @@ export const PICKUP_LOCATION = {
   detail: ADDRESS_SINGLE,
 };
 
-function area(id, label, fee = 200) {
-  return { id, label, fee };
+function area(id, label, fee = 200, coords = null) {
+  return { id, label, fee, coords };
 }
 
 /** City → areas with delivery fee (PKR) */
@@ -21,41 +21,10 @@ export const DELIVERY_CITIES = [
     id: 'karachi',
     label: 'Karachi',
     areas: [
-      area('dha-all-phases', 'DHA All Phases', 150),
-      area('clifton-all-blocks', 'Clifton All Blocks', 200),
-      area('civil-lines', 'Civil Lines'),
-      area('emaar', 'Emaar'),
-      area('jinnah-hospital', 'Jinnah Hospital'),
-      area('lalazar', 'Lalazar'),
-      area('kashif-centre', 'Kashif Centre'),
-      area('hotel-mehran', 'Hotel Mehran'),
-      area('shireen-jinnah-colony', 'Shireen Jinnah Colony'),
-      area('ii-chundrigar-road', 'I.I. Chundrigar Road'),
-      area('lucky-star', 'Lucky Star'),
-      area('faisal-house', 'Faisal House'),
-      area('mehmoodabad', 'Mehmoodabad'),
-      area('sindhi-muslim', 'Sindhi Muslim'),
-      area('pechs', 'PECHS'),
-      area('kashmir-road', 'Kashmir Road'),
-      area('jamshed-road', 'Jamshed Road'),
-      area('garden-east', 'Garden East'),
-      area('bahadurabad', 'Bahadurabad'),
-      area('sharfabad', 'Sharfabad'),
-      area('muhammad-ali-society', 'Muhammad Ali Society'),
-      area('kda-scheme-1', 'KDA Scheme 1'),
-      area('shahrah-e-faisal-karsaz', 'Shahrah-e-Faisal up to Karsaz'),
-      area('kharadar', 'Kharadar'),
-      area('west-wharf', 'West Wharf'),
-      area('korangi', 'Korangi', 250),
-      area('nhs-karsaz', 'NHS Karsaz'),
-      area('aga-khan-hospital', 'Aga Khan Hospital'),
-      area('liaquat-national-hospital', 'Liaquat National Hospital'),
-      area('gulshan-e-jamal', 'Gulshan-e-Jamal', 250),
-      area('garden-west', 'Garden West'),
-      area('askari-4', 'Askari 4'),
-      area('pib-colony', 'PIB Colony'),
-      area('gulshan-e-iqbal', 'Gulshan-e-Iqbal', 250),
-      area('gulistan-e-johar', 'Gulistan-e-Johar', 250),
+      area('dha-all-phases', 'DHA All Phases', 150, { lat: 24.8125, lng: 67.065 }),
+      area('clifton-all-blocks', 'Clifton All Blocks', 200, { lat: 24.813, lng: 67.028 }),
+      area('civil-lines', 'Civil Lines', 200, { lat: 24.848, lng: 67.018 }),
+      area('emaar', 'Emaar', 200, { lat: 24.802, lng: 67.078 }),
     ],
   },
 ];
@@ -66,6 +35,36 @@ export function findArea(cityId, areaId) {
   const areaMatch = city.areas.find((item) => item.id === areaId);
   if (!areaMatch) return null;
   return { city, area: areaMatch, fee: areaMatch.fee };
+}
+
+function haversineKm(a, b) {
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(h));
+}
+
+/** Nearest delivery area for browser geolocation coords */
+export function nearestArea(lat, lng) {
+  const city = DELIVERY_CITIES[0];
+  if (!city) return null;
+  let best = null;
+  let bestDist = Infinity;
+  for (const item of city.areas) {
+    if (!item.coords) continue;
+    const dist = haversineKm({ lat, lng }, item.coords);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = item;
+    }
+  }
+  if (!best) return null;
+  return { city, area: best, fee: best.fee, distanceKm: bestDist };
 }
 
 export const REWARD_TIERS = [
