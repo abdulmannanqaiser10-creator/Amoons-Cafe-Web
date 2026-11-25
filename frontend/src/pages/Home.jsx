@@ -12,7 +12,7 @@ function Home() {
     <div className="amoons-page min-h-screen bg-[var(--color-bg)]">
       <Header bagCount={itemCount} />
       <Hero />
-      <MenuSection />
+      <MenuSection mode="preview" />
       <VisitSection />
       <Footer />
     </div>

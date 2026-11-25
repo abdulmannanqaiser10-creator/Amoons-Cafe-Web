@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCustomer } from '../context/CustomerContext';
 import { useOrderType } from '../context/OrderTypeContext';
 
@@ -12,8 +12,15 @@ const NAV_LINKS = [
 
 function Header({ bagCount = 0 }) {
   const [open, setOpen] = useState(false);
-  const { isLoggedIn, points, openAuth, logout, customer } = useCustomer();
+  const navigate = useNavigate();
+  const { isLoggedIn, points, openAuth, customer } = useCustomer();
   const { reopen, fulfillment } = useOrderType();
+
+  const goRewards = () => {
+    setOpen(false);
+    if (!isLoggedIn) openAuth('rewards');
+    navigate('/rewards');
+  };
 
   return (
     <header className="site-header">
@@ -55,24 +62,14 @@ function Header({ bagCount = 0 }) {
             </Link>
           ))}
 
-          {isLoggedIn ? (
-            <button
-              type="button"
-              className="whitespace-nowrap transition-opacity duration-200 hover:opacity-55"
-              onClick={() => logout()}
-              title={customer?.name || 'Rewards'}
-            >
-              {points} PTS
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="whitespace-nowrap transition-opacity duration-200 hover:opacity-55"
-              onClick={() => openAuth('rewards')}
-            >
-              REWARDS
-            </button>
-          )}
+          <button
+            type="button"
+            className="whitespace-nowrap transition-opacity duration-200 hover:opacity-55"
+            onClick={goRewards}
+            title={customer?.name || 'Rewards'}
+          >
+            {isLoggedIn ? `${points} PTS` : 'REWARDS'}
+          </button>
 
           <Link
             to="/bag"
@@ -88,9 +85,13 @@ function Header({ bagCount = 0 }) {
 
         <div className="flex items-center gap-3 md:hidden">
           {isLoggedIn ? (
-            <span className="font-sans text-[10px] font-bold tracking-[0.08em] text-[var(--color-primary)]">
+            <button
+              type="button"
+              className="font-sans text-[10px] font-bold tracking-[0.08em] text-[var(--color-primary)]"
+              onClick={goRewards}
+            >
               {points} PTS
-            </span>
+            </button>
           ) : null}
           <Link
             to="/bag"
@@ -154,11 +155,7 @@ function Header({ bagCount = 0 }) {
           <button
             type="button"
             className="py-1 text-left font-sans text-[13px] font-bold tracking-[0.14em] text-[var(--color-primary)]"
-            onClick={() => {
-              setOpen(false);
-              if (isLoggedIn) logout();
-              else openAuth('rewards');
-            }}
+            onClick={goRewards}
           >
             {isLoggedIn ? `REWARDS · ${points} PTS` : 'REWARDS'}
           </button>

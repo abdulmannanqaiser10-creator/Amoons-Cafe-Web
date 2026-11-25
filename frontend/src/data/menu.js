@@ -589,3 +589,12 @@ export function getFeaturedProducts() {
     Boolean
   );
 }
+
+/** Homepage preview: about half the menu, featured items first. */
+export function getHomeShowcaseProducts() {
+  const featured = getFeaturedProducts();
+  const featuredIds = new Set(featured.map((item) => item.id));
+  const rest = PRODUCTS.filter((item) => !featuredIds.has(item.id));
+  const target = Math.max(featured.length, Math.ceil(PRODUCTS.length / 2));
+  return [...featured, ...rest].slice(0, target);
+}
