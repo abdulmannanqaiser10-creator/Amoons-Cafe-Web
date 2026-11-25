@@ -1,69 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useCustomer } from '../context/CustomerContext';
 import { useOrderType } from '../context/OrderTypeContext';
 
-const HALF_LINKS = [
+const NAV_LINKS = [
   { to: '/menu', label: 'MENU' },
   { to: '/reservations', label: 'RESERVATIONS' },
-];
-
-const FULL_LINKS = [
-  { to: '/menu', label: 'Menu', hint: 'Order favourites' },
-  { to: '/reservations', label: 'Reservations', hint: 'Book a table' },
-  { to: '/catering', label: 'Catering', hint: 'Events & sharing' },
-  { to: '/visit', label: 'Visit', hint: 'Find the café' },
-  { to: '/rewards', label: 'Rewards', hint: 'Points & history' },
-  { to: '/bag', label: 'Bag', hint: 'Your order' },
-  { to: '/pickup', label: 'Pick-Up', hint: 'Collect in store' },
+  { to: '/catering', label: 'CATERING' },
+  { to: '/visit', label: 'VISIT' },
 ];
 
 function Header({ bagCount = 0 }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { isLoggedIn, points, openAuth, customer } = useCustomer();
+  const [open, setOpen] = useState(false);
+  const { isLoggedIn, points, openAuth, logout, customer } = useCustomer();
   const { reopen, fulfillment } = useOrderType();
-
-  const isHome = location.pathname === '/' || location.pathname === '/menu';
-
-  useEffect(() => {
-    setMobileOpen(false);
-    setMenuOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (!menuOpen) return undefined;
-
-    const onPointerDown = (event) => {
-      if (!menuRef.current?.contains(event.target)) {
-        setMenuOpen(false);
-      }
-    };
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') setMenuOpen(false);
-    };
-
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [menuOpen]);
-
-  const goRewards = () => {
-    setMenuOpen(false);
-    setMobileOpen(false);
-    if (isLoggedIn) {
-      navigate('/rewards');
-      return;
-    }
-    openAuth('rewards');
-    navigate('/rewards');
-  };
 
   return (
     <header className="site-header">
@@ -72,10 +22,7 @@ function Header({ bagCount = 0 }) {
           <Link
             to="/"
             className="flex flex-col items-center"
-            onClick={() => {
-              setMobileOpen(false);
-              setMenuOpen(false);
-            }}
+            onClick={() => setOpen(false)}
           >
             <span className="font-serif text-[34px] sm:text-[38px] lg:text-[40px] font-normal leading-[0.92] tracking-[-0.02em]">
               AMOONS
@@ -89,8 +36,7 @@ function Header({ bagCount = 0 }) {
             type="button"
             className="mt-[6px] rounded-full border border-[var(--color-border-soft)] px-[12px] py-[4.5px] font-sans text-[8px] font-normal leading-none tracking-[0.02em] text-[var(--color-primary)] transition-colors hover:bg-white/70"
             onClick={() => {
-              setMobileOpen(false);
-              setMenuOpen(false);
+              setOpen(false);
               reopen();
             }}
           >
@@ -98,18 +44,8 @@ function Header({ bagCount = 0 }) {
           </button>
         </div>
 
-        <nav
-          className="hidden items-center gap-[18px] lg:gap-[24px] md:flex font-sans text-[12px] lg:text-[12.5px] font-bold tracking-[0.16em] text-[var(--color-primary)]"
-          aria-label="Primary"
-        >
-          {(isHome
-            ? HALF_LINKS
-            : [
-                ...HALF_LINKS,
-                { to: '/catering', label: 'CATERING' },
-                { to: '/visit', label: 'VISIT' },
-              ]
-          ).map((link) => (
+        <nav className="hidden items-center gap-[22px] lg:gap-[28px] md:flex font-sans text-[12px] lg:text-[12.5px] font-bold tracking-[0.16em] text-[var(--color-primary)]">
+          {NAV_LINKS.map((link) => (
             <Link
               key={link.to}
               to={link.to}
@@ -119,80 +55,24 @@ function Header({ bagCount = 0 }) {
             </Link>
           ))}
 
-          <div className="nav-menu-wrap" ref={menuRef}>
+          {isLoggedIn ? (
             <button
               type="button"
-              className={`nav-menu-trigger${menuOpen ? ' is-open' : ''}`}
-              aria-expanded={menuOpen}
-              aria-controls="site-full-menu"
-              onClick={() => setMenuOpen((value) => !value)}
+              className="whitespace-nowrap transition-opacity duration-200 hover:opacity-55"
+              onClick={() => logout()}
+              title={customer?.name || 'Rewards'}
             >
-              Menu
-              <span aria-hidden="true">{menuOpen ? '▴' : '▾'}</span>
+              {points} PTS
             </button>
-
-            <div
-              id="site-full-menu"
-              className={`nav-menu-panel${menuOpen ? ' is-open' : ''}`}
-              hidden={!menuOpen}
+          ) : (
+            <button
+              type="button"
+              className="whitespace-nowrap transition-opacity duration-200 hover:opacity-55"
+              onClick={() => openAuth('rewards')}
             >
-              <div className="nav-menu-panel-inner">
-                <p className="nav-menu-eyebrow">Explore AMOONS</p>
-                <div className="nav-menu-grid">
-                  {FULL_LINKS.map((link) => {
-                    if (link.to === '/rewards') {
-                      return (
-                        <button
-                          key={link.to}
-                          type="button"
-                          className="nav-menu-item"
-                          onClick={goRewards}
-                        >
-                          <span className="nav-menu-item-label">{link.label}</span>
-                          <span className="nav-menu-item-hint">
-                            {isLoggedIn ? `${points} pts available` : link.hint}
-                          </span>
-                        </button>
-                      );
-                    }
-                    return (
-                      <Link
-                        key={link.to}
-                        to={link.to}
-                        className="nav-menu-item"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <span className="nav-menu-item-label">{link.label}</span>
-                        <span className="nav-menu-item-hint">{link.hint}</span>
-                      </Link>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    className="nav-menu-item"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      reopen();
-                    }}
-                  >
-                    <span className="nav-menu-item-label">Order type</span>
-                    <span className="nav-menu-item-hint">
-                      {fulfillment || 'Delivery or pick-up'}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="whitespace-nowrap transition-opacity duration-200 hover:opacity-55"
-            onClick={goRewards}
-            title={customer?.name || 'Rewards'}
-          >
-            {isLoggedIn ? `${points} PTS` : 'REWARDS'}
-          </button>
+              REWARDS
+            </button>
+          )}
 
           <Link
             to="/bag"
@@ -208,13 +88,9 @@ function Header({ bagCount = 0 }) {
 
         <div className="flex items-center gap-3 md:hidden">
           {isLoggedIn ? (
-            <button
-              type="button"
-              className="font-sans text-[10px] font-bold tracking-[0.08em] text-[var(--color-primary)]"
-              onClick={goRewards}
-            >
+            <span className="font-sans text-[10px] font-bold tracking-[0.08em] text-[var(--color-primary)]">
               {points} PTS
-            </button>
+            </span>
           ) : null}
           <Link
             to="/bag"
@@ -231,78 +107,63 @@ function Header({ bagCount = 0 }) {
             type="button"
             className="flex h-10 w-10 flex-col items-center justify-center gap-[5px]"
             aria-label="Toggle menu"
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((value) => !value)}
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
           >
             <span
               className={`block h-[1.5px] w-5 bg-[var(--color-primary)] transition ${
-                mobileOpen ? 'translate-y-[6.5px] rotate-45' : ''
+                open ? 'translate-y-[6.5px] rotate-45' : ''
               }`}
             />
             <span
               className={`block h-[1.5px] w-5 bg-[var(--color-primary)] transition ${
-                mobileOpen ? 'opacity-0' : ''
+                open ? 'opacity-0' : ''
               }`}
             />
             <span
               className={`block h-[1.5px] w-5 bg-[var(--color-primary)] transition ${
-                mobileOpen ? '-translate-y-[6.5px] -rotate-45' : ''
+                open ? '-translate-y-[6.5px] -rotate-45' : ''
               }`}
             />
           </button>
         </div>
       </div>
 
-      {mobileOpen ? (
-        <nav
-          className="mobile-nav-panel page-pad-x md:hidden"
-          aria-label="Mobile menu"
-        >
-          <div className="mobile-nav-grid">
-            {FULL_LINKS.map((link) => {
-              if (link.to === '/rewards') {
-                return (
-                  <button
-                    key={link.to}
-                    type="button"
-                    className="mobile-nav-tile"
-                    onClick={goRewards}
-                  >
-                    <span className="mobile-nav-tile-label">{link.label}</span>
-                    <span className="mobile-nav-tile-hint">
-                      {isLoggedIn ? `${points} pts` : link.hint}
-                    </span>
-                  </button>
-                );
-              }
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className="mobile-nav-tile"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <span className="mobile-nav-tile-label">{link.label}</span>
-                  <span className="mobile-nav-tile-hint">{link.hint}</span>
-                </Link>
-              );
-            })}
-            <button
-              type="button"
-              className="mobile-nav-tile"
-              onClick={() => {
-                setMobileOpen(false);
-                reopen();
-              }}
+      {open && (
+        <nav className="page-pad-x absolute inset-x-0 top-full z-40 flex flex-col gap-4 border-b border-[var(--color-border)] bg-[var(--color-bg)] py-5 shadow-sm md:hidden">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="py-1 font-sans text-[13px] font-bold tracking-[0.14em] text-[var(--color-primary)]"
+              onClick={() => setOpen(false)}
             >
-              <span className="mobile-nav-tile-label">Order type</span>
-              <span className="mobile-nav-tile-hint">
-                {fulfillment || 'Choose now'}
-              </span>
-            </button>
-          </div>
+              {link.label}
+            </Link>
+          ))}
+          <button
+            type="button"
+            className="py-1 text-left font-sans text-[13px] font-bold tracking-[0.14em] text-[var(--color-primary)]"
+            onClick={() => {
+              setOpen(false);
+              reopen();
+            }}
+          >
+            ORDER TYPE
+          </button>
+          <button
+            type="button"
+            className="py-1 text-left font-sans text-[13px] font-bold tracking-[0.14em] text-[var(--color-primary)]"
+            onClick={() => {
+              setOpen(false);
+              if (isLoggedIn) logout();
+              else openAuth('rewards');
+            }}
+          >
+            {isLoggedIn ? `REWARDS · ${points} PTS` : 'REWARDS'}
+          </button>
         </nav>
-      ) : null}
+      )}
     </header>
   );
 }

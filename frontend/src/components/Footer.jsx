@@ -14,7 +14,6 @@ function Footer() {
           <Link to="/reservations">Reservations</Link>
           <Link to="/catering">Catering</Link>
           <Link to="/visit">Visit</Link>
-          <Link to="/rewards">Rewards</Link>
           <Link to="/pickup">Pick-Up</Link>
         </nav>
 
