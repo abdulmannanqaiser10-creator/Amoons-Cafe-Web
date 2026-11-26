@@ -1,38 +1,30 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  CATEGORIES,
-  PRODUCTS,
-  getFeaturedProducts,
-  getHomeShowcaseProducts,
-  productMatchesCategory,
-} from '../data/menu';
 import { useCart } from '../context/CartContext';
+import { useMenu } from '../context/MenuContext';
 import ProductCard from './ProductCard';
 import Recommendations from './Recommendations';
 
 function MenuSection({ mode = 'full' }) {
   const isPreview = mode === 'preview';
-  const [active, setActive] = useState(isPreview ? 'showcase' : 'featured');
+  const {
+    categories,
+    products,
+    featuredProducts,
+    productMatchesCategory,
+  } = useMenu();
+  const [active, setActive] = useState('featured');
   const [lastAdded, setLastAdded] = useState(null);
   const { addItem, items: cartItems } = useCart();
   const trackRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const featuredProducts = useMemo(() => getFeaturedProducts(), []);
-  const showcaseProducts = useMemo(() => getHomeShowcaseProducts(), []);
-
-  const categories = useMemo(
-    () => (isPreview ? [] : CATEGORIES),
-    [isPreview]
-  );
-
   const items = useMemo(() => {
-    if (isPreview) return showcaseProducts;
-    if (active === 'featured') return featuredProducts;
-    return PRODUCTS.filter((item) => productMatchesCategory(item, active));
-  }, [isPreview, showcaseProducts, active, featuredProducts]);
+    if (isPreview) return featuredProducts.slice(0, 3);
+    if (active === 'featured') return featuredProducts.slice(0, 3);
+    return products.filter((item) => productMatchesCategory(item, active));
+  }, [isPreview, featuredProducts, active, products, productMatchesCategory]);
 
   const excludeIds = useMemo(
     () => cartItems.map((item) => item.id),
@@ -106,13 +98,13 @@ function MenuSection({ mode = 'full' }) {
               <p>DESERT . COFFEE . MORE</p>
             </div>
             <h2 className="menu-section-title">
-              {isPreview ? 'Find your favourite.' : 'The full AMOONS menu.'}
+              {isPreview ? 'Find your favourite.' : 'Crafted for every craving.'}
             </h2>
           </div>
           <p className="menu-section-aside">
             {isPreview
               ? 'A carefully made coffee, something savoury or a sweet finish - find your favourite.'
-              : 'Browse every category — specialty coffee, café favourites, desserts and more.'}
+              : 'From slow coffee to signature tiramisu — explore every AMOONS favourite, made with care.'}
           </p>
         </div>
 
@@ -175,7 +167,7 @@ function MenuSection({ mode = 'full' }) {
 
         <div
           className={`product-grid${
-            !isPreview && active === 'featured' ? ' product-grid--featured' : ''
+            isPreview || active === 'featured' ? ' product-grid--featured' : ''
           }`}
         >
           {items.map((product) => (
@@ -183,7 +175,7 @@ function MenuSection({ mode = 'full' }) {
               key={product.id}
               product={product}
               onAdd={handleAdd}
-              featured={!isPreview && active === 'featured'}
+              featured={isPreview || active === 'featured'}
             />
           ))}
         </div>

@@ -46,6 +46,8 @@ export function CartProvider({ children }) {
   const [items, setItems] = useState(() => loadCart());
   const [lastOrder, setLastOrder] = useState(null);
   const [redeemPoints, setRedeemPoints] = useState(0);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastToken, setToastToken] = useState(0);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -58,31 +60,33 @@ export function CartProvider({ children }) {
     if (redeemPoints && !tier) setRedeemPoints(0);
   }, [customer?.points, redeemPoints]);
 
-  const addItem = useCallback(
-    (product) => {
-      setItems((prev) => {
-        const existing = prev.find((item) => item.id === product.id);
-        if (existing) {
-          return prev.map((item) =>
-            item.id === product.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          );
-        }
-        return [
-          ...prev,
-          {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            image: product.image,
-            quantity: 1,
-          },
-        ];
-      });
-    },
-    []
-  );
+  const clearToast = useCallback(() => setToastMessage(''), []);
+
+  const addItem = useCallback((product) => {
+    setItems((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: product.id,
+          productId: product.productId || undefined,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: 1,
+        },
+      ];
+    });
+    setToastMessage('Item successfully added to cart!');
+    setToastToken((value) => value + 1);
+  }, []);
 
   const removeItem = useCallback((id) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
@@ -192,7 +196,13 @@ export function CartProvider({ children }) {
 
       const externalOrderId = `AMN-${Date.now().toString().slice(-8)}`;
       const cartSnapshot = items.map((item) => ({ ...item }));
-      const paymentMethod = form.paymentMethod === 'Card' ? 'Card' : 'Cash';
+      const paymentMethod =
+        form.paymentMethod === 'Bank Transfer'
+          ? 'Bank Transfer'
+          : form.paymentMethod === 'Card'
+            ? 'Card'
+            : 'Cash';
+      const bankTransfer = paymentMethod === 'Bank Transfer';
       const address =
         fulfillment === 'Pick-Up'
           ? deliveryLabel
@@ -211,7 +221,8 @@ export function CartProvider({ children }) {
           email: form.email || customer.email || undefined,
           notes: form.notes || undefined,
           paymentMethod,
-          amountPaid: total,
+          amountPaid: bankTransfer ? 0 : total,
+          paymentReceipt: form.paymentReceipt || undefined,
           redeemPoints: selectedTier?.points || 0,
           externalOrderId,
           items: cartSnapshot.map((item) => ({
@@ -246,6 +257,9 @@ export function CartProvider({ children }) {
         taxAmount: posResult?.order?.taxAmount ?? taxAmount,
         total: posResult?.order?.total ?? total,
         paymentMethod,
+        paymentStatus: bankTransfer
+          ? 'Payment Pending Verification'
+          : posResult?.order?.paymentStatus || undefined,
         loyaltyPointsAwarded: posResult?.order?.loyaltyPointsAwarded ?? 0,
         loyaltyPointsPending: posResult?.order?.loyaltyPointsPending ?? 10,
         loyaltyPointsBalance: posResult?.order?.loyaltyPointsBalance ?? null,
@@ -297,6 +311,9 @@ export function CartProvider({ children }) {
       selectedTier,
       redeemPoints,
       selectRedeem,
+      toastMessage,
+      toastToken,
+      clearToast,
       afterDiscount,
       taxAmount,
       taxRate: TAX_RATE,
@@ -322,6 +339,9 @@ export function CartProvider({ children }) {
       selectedTier,
       redeemPoints,
       selectRedeem,
+      toastMessage,
+      toastToken,
+      clearToast,
       afterDiscount,
       taxAmount,
       fee,

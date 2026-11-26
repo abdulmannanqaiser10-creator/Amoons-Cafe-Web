@@ -11,6 +11,7 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import Rewards from './pages/Rewards';
 import OrderTypeModal from './components/OrderTypeModal';
 import RewardsAuthModal from './components/RewardsAuthModal';
+import CartToast from './components/CartToast';
 import ScrollToTop from './components/ScrollToTop';
 import { useOrderType } from './context/OrderTypeContext';
 
@@ -45,6 +46,7 @@ function App() {
       </Routes>
       <OrderTypeModal />
       <RewardsAuthModal />
+      <CartToast />
     </BrowserRouter>
   );
 }

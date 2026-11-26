@@ -52,10 +52,17 @@ function OrderConfirmation() {
       <section className="confirm-page page-pad-x">
         <div className="confirm-card">
           <p className="section-eyebrow">Thank you</p>
-          <h1 className="confirm-title">Your order is confirmed.</h1>
+          <h1 className="confirm-title">
+            {order.paymentStatus === 'Payment Pending Verification'
+              ? 'Payment submitted for verification.'
+              : 'Your order is confirmed.'}
+          </h1>
           <p className="confirm-lead">
-            We&apos;ve received your AMOONS order
-            {location.state?.orderId ? ` · ${location.state.orderId}` : ''}.
+            {order.paymentStatus === 'Payment Pending Verification'
+              ? 'We have received your order and payment receipt. Your payment is pending verification and the order is not marked as paid yet.'
+              : "We've received your AMOONS order"}
+            {location.state?.orderId ? ` · ${location.state.orderId}` : ''}
+            {order.paymentStatus === 'Payment Pending Verification' ? '' : '.'}
           </p>
 
           <div className="confirm-meta">

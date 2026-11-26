@@ -4,6 +4,7 @@ import App from './App';
 import { OrderTypeProvider } from './context/OrderTypeContext';
 import { CustomerProvider } from './context/CustomerContext';
 import { CartProvider } from './context/CartContext';
+import { MenuProvider } from './context/MenuContext';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -11,7 +12,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <OrderTypeProvider>
       <CustomerProvider>
         <CartProvider>
-          <App />
+          <MenuProvider>
+            <App />
+          </MenuProvider>
         </CartProvider>
       </CustomerProvider>
     </OrderTypeProvider>

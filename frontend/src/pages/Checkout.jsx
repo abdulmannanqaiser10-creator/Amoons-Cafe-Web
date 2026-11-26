@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import PageShell from '../components/PageShell';
+import BankTransferModal from '../components/BankTransferModal';
 import { useCart } from '../context/CartContext';
 import { useCustomer } from '../context/CustomerContext';
 import { useOrderType } from '../context/OrderTypeContext';
@@ -35,12 +36,13 @@ function Checkout() {
     address: streetAddress || '',
     email: customer?.email || '',
     notes: '',
-    paymentMethod: 'Cash',
+    paymentMethod: 'Bank Transfer',
   });
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [paymentOpen, setPaymentOpen] = useState(false);
 
   useEffect(() => {
     setForm((prev) => ({
@@ -77,7 +79,8 @@ function Checkout() {
             <p className="section-eyebrow">Checkout</p>
             <h1 className="section-title">Verify your mobile to continue</h1>
             <p className="section-lead">
-              Register or sign in with OTP to place your order and use rewards.
+              Register or sign in with your mobile number to place your order
+              and use rewards.
             </p>
             <button
               type="button"
@@ -121,17 +124,14 @@ function Checkout() {
     ) {
       next.email = 'Enter a valid email or leave it blank.';
     }
-    if (!['Cash', 'Card'].includes(form.paymentMethod)) {
-      next.paymentMethod = 'Choose Cash or Card.';
+    if (!['Cash', 'Card', 'Bank Transfer'].includes(form.paymentMethod)) {
+      next.paymentMethod = 'Choose a payment method.';
     }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
-    if (!validate() || submitting) return;
-
+  const placeConfirmedOrder = async (extra = {}) => {
     setSubmitting(true);
     setSubmitError('');
 
@@ -143,8 +143,10 @@ function Checkout() {
         email: form.email.trim(),
         notes: form.notes.trim(),
         paymentMethod: form.paymentMethod,
+        paymentReceipt: extra.paymentReceipt,
       });
       setSubmitted(true);
+      setPaymentOpen(false);
       navigate('/order-confirmation', { state: { orderId: order.id } });
     } catch (error) {
       setSubmitError(
@@ -153,6 +155,18 @@ function Checkout() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    if (!validate() || submitting) return;
+
+    if (form.paymentMethod === 'Bank Transfer') {
+      setPaymentOpen(true);
+      return;
+    }
+
+    await placeConfirmedOrder();
   };
 
   return (
@@ -239,6 +253,16 @@ function Checkout() {
                     <input
                       type="radio"
                       name="paymentMethod"
+                      value="Bank Transfer"
+                      checked={form.paymentMethod === 'Bank Transfer'}
+                      onChange={onChange}
+                    />
+                    <span>Bank Transfer</span>
+                  </label>
+                  <label className="checkout-payment-option">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
                       value="Cash"
                       checked={form.paymentMethod === 'Cash'}
                       onChange={onChange}
@@ -281,7 +305,7 @@ function Checkout() {
                 className="hero-btn hero-btn-primary checkout-submit"
                 disabled={submitting}
               >
-                {submitting ? 'Placing order…' : 'Place Order'}
+                {submitting ? 'Placing order…' : 'Confirm Your Order'}
               </button>
               <Link to="/bag" className="bag-continue">
                 Back to bag
@@ -328,6 +352,14 @@ function Checkout() {
           </div>
         </div>
       </section>
+
+      <BankTransferModal
+        open={paymentOpen}
+        total={total}
+        submitting={submitting}
+        onClose={() => setPaymentOpen(false)}
+        onConfirm={placeConfirmedOrder}
+      />
     </PageShell>
   );
 }
